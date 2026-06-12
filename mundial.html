@@ -888,12 +888,12 @@
         };
 
         var coloresQuiniela = {
-          'Iñigo':   '#E53935',
-          'Inna':    '#E91E8C',
-          'Ainhara': '#1E88E5',
-          'Tere':    '#8E24AA',
-          'Nacho':   '#43A047',
-          'Miguel':  '#FDD835'
+          'Iñigo':   {hex:'#E53935', rgba:'rgba(229,57,53,0.18)'},
+          'Inna':    {hex:'#E91E8C', rgba:'rgba(233,30,140,0.18)'},
+          'Ainhara': {hex:'#1E88E5', rgba:'rgba(30,136,229,0.18)'},
+          'Tere':    {hex:'#8E24AA', rgba:'rgba(142,36,170,0.18)'},
+          'Nacho':   {hex:'#43A047', rgba:'rgba(67,160,71,0.18)'},
+          'Miguel':  {hex:'#FDD835', rgba:'rgba(253,216,53,0.18)'}
         };
 
         var colorPorEquipo = {};
@@ -947,7 +947,7 @@
             var elim = paisesEliminados[team.fl];
             var colorTeam = colorPorEquipo[team.fl];
             var rowStyle = elim ? 'opacity:0.38;' : (confirmado[idx] ? 'background:rgba(34,139,34,0.28);' : '');
-            if (colorTeam && !elim) rowStyle += 'background:' + colorTeam + '22;border-left:4px solid ' + colorTeam + ';';
+            if (colorTeam && !elim) rowStyle += 'background:' + colorTeam.rgba + ';border-left:4px solid ' + colorTeam.hex + ';';
             var gdStr = team.gd > 0 ? '+' + team.gd : '' + team.gd;
             var gdCol = team.gd > 0 ? '#5cb85c' : team.gd < 0 ? '#d9534f' : '#888';
             html += '<div style="display:grid;grid-template-columns:14px 1fr 24px 28px 28px;gap:2px;align-items:center;padding:5px 10px;border-bottom:1px solid #D4B896;' + rowStyle + '">';
