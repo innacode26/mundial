@@ -945,12 +945,12 @@
           }
           data.forEach(function(team, idx) {
             var elim = paisesEliminados[team.fl];
+            var colorTeam = colorPorEquipo[team.fl];
             var rowStyle = elim ? 'opacity:0.38;' : (confirmado[idx] ? 'background:rgba(34,139,34,0.28);' : '');
+            if (colorTeam && !elim) rowStyle += 'background:' + colorTeam + '22;border-left:4px solid ' + colorTeam + ';';
             var gdStr = team.gd > 0 ? '+' + team.gd : '' + team.gd;
             var gdCol = team.gd > 0 ? '#5cb85c' : team.gd < 0 ? '#d9534f' : '#888';
             html += '<div style="display:grid;grid-template-columns:14px 1fr 24px 28px 28px;gap:2px;align-items:center;padding:5px 10px;border-bottom:1px solid #D4B896;' + rowStyle + '">';
-            var colorTeam = colorPorEquipo[team.fl];
-            if (colorTeam) rowStyle += 'background:' + colorTeam + '22;border-left:4px solid ' + colorTeam + ';';
             html += '<div style="font-size:0.65rem;color:#666;text-align:center;">' + (idx+1) + '</div>';
             html += '<div style="display:flex;align-items:center;gap:5px;min-width:0;">';
             html += '<img src="https://flagcdn.com/w40/' + team.fl + '.png" style="width:22px;height:15px;object-fit:cover;border-radius:2px;border:1px solid #444;flex-shrink:0;">';
