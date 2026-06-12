@@ -805,29 +805,17 @@
         }
 
         function cargarResultados() {
-          // Intentar con rango completo del torneo primero
-          fetch('https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/scoreboard?dates=20260611-20260719&limit=100')
-          .then(function(r) { return r.json(); })
-          .then(function(data) {
-            procesarResultadosData(data);
-            // Si no devuelve nada, pedir día a día desde inicio hasta hoy
-            if (!data.events || data.events.length === 0) {
-              var hoy = new Date();
-              for (var i = 0; i <= 32; i++) {
-                var d = new Date(2026, 5, 11 + i);
-                if (d > hoy) break;
-                var y = d.getFullYear();
-                var m = String(d.getMonth() + 1).padStart(2, '0');
-                var dd = String(d.getDate()).padStart(2, '0');
-                var fecha = y + '' + m + '' + dd;
-                fetch('https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/scoreboard?dates=' + fecha)
-                .then(function(r) { return r.json(); })
-                .then(procesarResultadosData)
-                .catch(function() {});
-              }
-            }
-          })
-          .catch(function() {});
+          var hoy = new Date();
+          for (var i = 0; i <= 32; i++) {
+            var d = new Date(2026, 5, 11 + i);
+            if (d > hoy) break;
+            (function(fecha) {
+              fetch('https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/scoreboard?dates=' + fecha + '&limit=50')
+              .then(function(r) { return r.json(); })
+              .then(procesarResultadosData)
+              .catch(function() {});
+            })('' + d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0'));
+          }
         }
 
         function comprobarEnDirecto() {
@@ -1137,10 +1125,11 @@
             var partes = key.split('-');
             var dia = parseInt(partes[0]);
             var mes = parseInt(partes[1]);
-            var fechaFin = new Date(2026, mes - 1, dia, 23, 59);
-            if (fechaFin >= ahora) return;
             partidos[key].forEach(function(p) {
-              if (!p.fl || !p.fv) return;
+              if (!p.fl || !p.fv || !p.h) return;
+              var tp = p.h.split(':');
+              var finPartido = new Date(2026, mes - 1, dia, parseInt(tp[0]) + 2, parseInt(tp[1]) + 20);
+              if (finPartido >= ahora) return;
               var cacheKey = p.fl + '-' + p.fv;
               if (resultadosCache[cacheKey]) return;
               var homeTeam = null, awayTeam = null;
@@ -1150,7 +1139,7 @@
                   if (team.fl === p.fv) awayTeam = team;
                 });
               });
-              if (homeTeam && awayTeam && homeTeam.mp === 1 && awayTeam.mp === 1) {
+              if (homeTeam && awayTeam && homeTeam.mp > 0 && awayTeam.mp > 0) {
                 resultadosCache[p.fl + '-' + p.fv] = homeTeam.gf + '-' + homeTeam.ga;
                 resultadosCache[p.fv + '-' + p.fl] = awayTeam.gf + '-' + awayTeam.ga;
               }
