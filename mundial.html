@@ -627,7 +627,9 @@
           document.getElementById('partidos-dia').innerHTML = '';
         }
 
+        var diaVisto = null, mesVisto = null;
         function mostrarPartidos(dia, mes) {
+          diaVisto = dia; mesVisto = mes;
           var key = dia + '-' + mes;
           var lista = partidos[key];
           var mesesNombres = {6:'junio',7:'julio'};
@@ -747,6 +749,19 @@
                 var comp = event.competitions && event.competitions[0];
                 if (!comp) return;
                 var statusName = comp.status && comp.status.type && comp.status.type.name;
+                if (statusName === 'STATUS_FINAL') {
+                  var h2 = comp.competitors && comp.competitors.find(function(c) { return c.homeAway === 'home'; });
+                  var a2 = comp.competitors && comp.competitors.find(function(c) { return c.homeAway === 'away'; });
+                  if (h2 && a2) {
+                    var fh2 = buscarFl(h2.team.displayName), fa2 = buscarFl(a2.team.displayName);
+                    if (fh2 && fa2) {
+                      resultadosCache[fh2 + '-' + fa2] = parseInt(h2.score) + '-' + parseInt(a2.score);
+                      resultadosCache[fa2 + '-' + fh2] = parseInt(a2.score) + '-' + parseInt(h2.score);
+                      if (diaVisto !== null) mostrarPartidos(diaVisto, mesVisto);
+                    }
+                  }
+                  return;
+                }
                 if (statusName !== 'STATUS_IN_PROGRESS' && statusName !== 'STATUS_HALFTIME') return;
                 var home = comp.competitors && comp.competitors.find(function(c) { return c.homeAway === 'home'; });
                 var away = comp.competitors && comp.competitors.find(function(c) { return c.homeAway === 'away'; });
@@ -767,26 +782,50 @@
           .catch(function() { mostrarEnJuego(enJuego); });
         }
 
+        function procesarResultadosData(data) {
+          if (!data.events) return;
+          var huboNuevos = false;
+          data.events.forEach(function(event) {
+            var comp = event.competitions && event.competitions[0];
+            if (!comp) return;
+            var statusName = comp.status && comp.status.type && comp.status.type.name;
+            if (statusName !== 'STATUS_FINAL') return;
+            var home = comp.competitors && comp.competitors.find(function(c) { return c.homeAway === 'home'; });
+            var away = comp.competitors && comp.competitors.find(function(c) { return c.homeAway === 'away'; });
+            if (!home || !away) return;
+            var flHome = buscarFl(home.team.displayName);
+            var flAway = buscarFl(away.team.displayName);
+            if (flHome && flAway) {
+              resultadosCache[flHome + '-' + flAway] = parseInt(home.score) + '-' + parseInt(away.score);
+              resultadosCache[flAway + '-' + flHome] = parseInt(away.score) + '-' + parseInt(home.score);
+              huboNuevos = true;
+            }
+          });
+          if (huboNuevos && diaVisto !== null) mostrarPartidos(diaVisto, mesVisto);
+        }
+
         function cargarResultados() {
-          fetch('https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/scoreboard')
+          // Intentar con rango completo del torneo primero
+          fetch('https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/scoreboard?dates=20260611-20260719&limit=100')
           .then(function(r) { return r.json(); })
           .then(function(data) {
-            if (!data.events) return;
-            data.events.forEach(function(event) {
-              var comp = event.competitions && event.competitions[0];
-              if (!comp) return;
-              var statusName = comp.status && comp.status.type && comp.status.type.name;
-              if (statusName !== 'STATUS_FINAL') return;
-              var home = comp.competitors && comp.competitors.find(function(c) { return c.homeAway === 'home'; });
-              var away = comp.competitors && comp.competitors.find(function(c) { return c.homeAway === 'away'; });
-              if (!home || !away) return;
-              var flHome = buscarFl(home.team.displayName);
-              var flAway = buscarFl(away.team.displayName);
-              if (flHome && flAway) {
-                resultadosCache[flHome + '-' + flAway] = parseInt(home.score) + '-' + parseInt(away.score);
-                resultadosCache[flAway + '-' + flHome] = parseInt(away.score) + '-' + parseInt(home.score);
+            procesarResultadosData(data);
+            // Si no devuelve nada, pedir día a día desde inicio hasta hoy
+            if (!data.events || data.events.length === 0) {
+              var hoy = new Date();
+              for (var i = 0; i <= 32; i++) {
+                var d = new Date(2026, 5, 11 + i);
+                if (d > hoy) break;
+                var y = d.getFullYear();
+                var m = String(d.getMonth() + 1).padStart(2, '0');
+                var dd = String(d.getDate()).padStart(2, '0');
+                var fecha = y + '' + m + '' + dd;
+                fetch('https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/scoreboard?dates=' + fecha)
+                .then(function(r) { return r.json(); })
+                .then(procesarResultadosData)
+                .catch(function() {});
               }
-            });
+            }
           })
           .catch(function() {});
         }
@@ -817,14 +856,17 @@
           document.getElementById('badge-directo').style.display = hayJuego ? 'inline-flex' : 'none';
           document.getElementById('barra-directo').style.display = hayJuego ? 'block' : 'none';
 
+          var ahora_ts = Date.now();
           if (hayJuego) {
-            var ahora_ts = Date.now();
             if (ahora_ts - ultimaAPI > 120000) {
               ultimaAPI = ahora_ts;
               actualizarDesdeAPI(enJuego);
             } else {
               mostrarEnJuego(enJuego);
             }
+          } else if (ahora_ts - ultimaAPI > 120000) {
+            ultimaAPI = ahora_ts;
+            actualizarDesdeAPI([]);
           }
         }
 
@@ -1084,8 +1126,37 @@
             actualizarEliminadosEnPagina();
             actualizarPuntosQuiniela();
             renderRankingQuiniela();
+            inferirResultadosDeClasificacion();
           })
           .catch(function() {});
+        }
+
+        function inferirResultadosDeClasificacion() {
+          var ahora = new Date();
+          Object.keys(partidos).forEach(function(key) {
+            var partes = key.split('-');
+            var dia = parseInt(partes[0]);
+            var mes = parseInt(partes[1]);
+            var fechaFin = new Date(2026, mes - 1, dia, 23, 59);
+            if (fechaFin >= ahora) return;
+            partidos[key].forEach(function(p) {
+              if (!p.fl || !p.fv) return;
+              var cacheKey = p.fl + '-' + p.fv;
+              if (resultadosCache[cacheKey]) return;
+              var homeTeam = null, awayTeam = null;
+              Object.keys(standingsAPI).forEach(function(letra) {
+                (standingsAPI[letra] || []).forEach(function(team) {
+                  if (team.fl === p.fl) homeTeam = team;
+                  if (team.fl === p.fv) awayTeam = team;
+                });
+              });
+              if (homeTeam && awayTeam && homeTeam.mp === 1 && awayTeam.mp === 1) {
+                resultadosCache[p.fl + '-' + p.fv] = homeTeam.gf + '-' + homeTeam.ga;
+                resultadosCache[p.fv + '-' + p.fl] = awayTeam.gf + '-' + awayTeam.ga;
+              }
+            });
+          });
+          if (diaVisto !== null) mostrarPartidos(diaVisto, mesVisto);
         }
 
         cargarClasificaciones();
