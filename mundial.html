@@ -887,6 +887,22 @@
           'Miguel':  ['ba','dz','ir','uy','tn','nz','br','de']
         };
 
+        var coloresQuiniela = {
+          'Iñigo':   '#E53935',
+          'Inna':    '#E91E8C',
+          'Ainhara': '#1E88E5',
+          'Tere':    '#8E24AA',
+          'Nacho':   '#43A047',
+          'Miguel':  '#FDD835'
+        };
+
+        var colorPorEquipo = {};
+        Object.keys(quinielaData).forEach(function(nombre) {
+          quinielaData[nombre].forEach(function(fl) {
+            colorPorEquipo[fl] = coloresQuiniela[nombre];
+          });
+        });
+
         // Puntos por victorias en eliminatorias (fl -> pts acumulados)
         var puntosKnockout = {};
 
@@ -933,6 +949,8 @@
             var gdStr = team.gd > 0 ? '+' + team.gd : '' + team.gd;
             var gdCol = team.gd > 0 ? '#5cb85c' : team.gd < 0 ? '#d9534f' : '#888';
             html += '<div style="display:grid;grid-template-columns:14px 1fr 24px 28px 28px;gap:2px;align-items:center;padding:5px 10px;border-bottom:1px solid #D4B896;' + rowStyle + '">';
+            var colorTeam = colorPorEquipo[team.fl];
+            if (colorTeam) rowStyle += 'background:' + colorTeam + '22;border-left:4px solid ' + colorTeam + ';';
             html += '<div style="font-size:0.65rem;color:#666;text-align:center;">' + (idx+1) + '</div>';
             html += '<div style="display:flex;align-items:center;gap:5px;min-width:0;">';
             html += '<img src="https://flagcdn.com/w40/' + team.fl + '.png" style="width:22px;height:15px;object-fit:cover;border-radius:2px;border:1px solid #444;flex-shrink:0;">';
@@ -1163,7 +1181,7 @@
       <div class="quiniela-grid" style="flex-shrink:0; width:min(840px, calc(100vw - 40px));">
 
         <div class="quiniela-card" id="qcard-inigo">
-          <div class="quiniela-nombre">Iñigo</div>
+          <div class="quiniela-nombre" style="background:#E53935;">Iñigo</div>
           <ul>
             <li data-fl="co"><img src="https://flagcdn.com/w40/co.png" alt="Colombia"> Colombia</li>
             <li data-fl="ci"><img src="https://flagcdn.com/w40/ci.png" alt="Costa de Marfil"> Costa de Marfil</li>
@@ -1177,7 +1195,7 @@
         </div>
 
         <div class="quiniela-card" id="qcard-inna">
-          <div class="quiniela-nombre">Inna</div>
+          <div class="quiniela-nombre" style="background:#E91E8C;">Inna</div>
           <ul>
             <li data-fl="ma"><img src="https://flagcdn.com/w40/ma.png" alt="Marruecos"> Marruecos</li>
             <li data-fl="iq"><img src="https://flagcdn.com/w40/iq.png" alt="Irak"> Irak</li>
@@ -1191,7 +1209,7 @@
         </div>
 
         <div class="quiniela-card" id="qcard-ainhara">
-          <div class="quiniela-nombre">Ainhara</div>
+          <div class="quiniela-nombre" style="background:#1E88E5;">Ainhara</div>
           <ul>
             <li data-fl="tr"><img src="https://flagcdn.com/w40/tr.png" alt="Turquía"> Turquía</li>
             <li data-fl="pa"><img src="https://flagcdn.com/w40/pa.png" alt="Panamá"> Panamá</li>
@@ -1205,7 +1223,7 @@
         </div>
 
         <div class="quiniela-card" id="qcard-tere">
-          <div class="quiniela-nombre">Tere</div>
+          <div class="quiniela-nombre" style="background:#8E24AA;">Tere</div>
           <ul>
             <li data-fl="se"><img src="https://flagcdn.com/w40/se.png" alt="Suecia"> Suecia</li>
             <li data-fl="uz"><img src="https://flagcdn.com/w40/uz.png" alt="Uzbekistán"> Uzbekistán</li>
@@ -1219,7 +1237,7 @@
         </div>
 
         <div class="quiniela-card" id="qcard-nacho">
-          <div class="quiniela-nombre">Nacho</div>
+          <div class="quiniela-nombre" style="background:#43A047;">Nacho</div>
           <ul>
             <li data-fl="eg"><img src="https://flagcdn.com/w40/eg.png" alt="Egipto"> Egipto</li>
             <li data-fl="cw"><img src="https://flagcdn.com/w40/cw.png" alt="Curazao"> Curazao</li>
@@ -1233,7 +1251,7 @@
         </div>
 
         <div class="quiniela-card" id="qcard-miguel">
-          <div class="quiniela-nombre">Miguel</div>
+          <div class="quiniela-nombre" style="background:#FDD835;color:#000;">Miguel</div>
           <ul>
             <li data-fl="ba"><img src="https://flagcdn.com/w40/ba.png" alt="Bosnia"> Bosnia y Herzegovina</li>
             <li data-fl="dz"><img src="https://flagcdn.com/w40/dz.png" alt="Argelia"> Argelia</li>
